@@ -7,6 +7,7 @@ function App() {
   const [rate, setRate] = useState(63.5)
   const [file, setFile] = useState<File>();
   const [state, setState] = useState<Status>('idle');
+  const apiKey = process.env.API_KEY;
 
   async function fetchData(startDate: string, endDate: string, airports: string[], urlArg?: string): Promise<any> {
 
@@ -17,7 +18,7 @@ function App() {
     const options = {
       method: 'GET',
       headers: {
-        'X-RapidAPI-Key': process.env.API_KEY || "",
+        'X-RapidAPI-Key': apiKey || "",
         'X-RapidAPI-Host': 'flight-info-api.p.rapidapi.com'
       }
     };
