@@ -31,7 +31,6 @@ function App() {
       if (paging.next) {
         content.data.push(...await fetchData("", "", [], paging.next))
       }
-      console.log(content.data)
       return content.data;
 
     } catch (e) {
