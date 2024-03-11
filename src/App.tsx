@@ -25,17 +25,23 @@ function App() {
 
     try {
       const response = await fetch(url, options);
-      const content = await response.json();
-      const { paging } = content
+      if (response.ok) {
+        const content = await response.json();
+        const { paging } = content
 
-      if (paging.next) {
-        content.data.push(...await fetchData("", "", [], paging.next))
+        if (paging.next) {
+          content.data.push(...await fetchData("", "", [], paging.next))
+        }
+        return content.data;
+      } else {
+        setState('error');
       }
-      return content.data;
+
 
     } catch (e) {
       console.log({ e })
       setState('error');
+      return;
     }
   }
 
@@ -44,6 +50,10 @@ function App() {
   }
 
   const handleButton = () => {
+    if (!file) {
+      alert("Please upload a .csv file from flylog")
+    }
+
     setState('loading')
     const reader = new FileReader();
     reader.onload = async ({ target }) => {
@@ -82,21 +92,23 @@ function App() {
           }
         }
         const data = await fetchData(initialDate, endDate, airports)
-        const minutes = parsedData.reduce((acc: any, record) => {
-          const depAirport = record["DEPARTURE_AIRPORT"];
-          const arrAirport = record["ARRIVAL_AIRPORT"];
-          const date = record["DATE"];
+        if (data) {
+          const minutes = parsedData.reduce((acc: any, record) => {
+            const depAirport = record["DEPARTURE_AIRPORT"];
+            const arrAirport = record["ARRIVAL_AIRPORT"];
+            const date = record["DATE"];
 
-          for (const dataRecord of data) {
-            if (dataRecord["departure"]["airport"]["iata"] === depAirport && dataRecord["arrival"]["airport"]["iata"] === arrAirport && dataRecord["departure"]["date"]["utc"] === date) {
-              return acc + dataRecord["elapsedTime"]
+            for (const dataRecord of data) {
+              if (dataRecord["departure"]["airport"]["iata"] === depAirport && dataRecord["arrival"]["airport"]["iata"] === arrAirport && dataRecord["departure"]["date"]["utc"] === date) {
+                return acc + dataRecord["elapsedTime"]
+              }
             }
-          }
-          console.log(depAirport, arrAirport, date, "not found")
-          return acc;
-        }, 0)
-        setCMinutes(minutes)
-        setState('success')
+            return acc;
+          }, 0)
+          setCMinutes(minutes)
+          setState('success')
+        }
+
 
       }
 
@@ -105,6 +117,7 @@ function App() {
     if (file) {
       reader.readAsText(file);
     } else {
+      alert("Error occured in processing the file")
       setState('error')
     }
   }
@@ -112,6 +125,13 @@ function App() {
   const handleFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
 
     if (e.target.files) {
+      const fileExtension = e.target.files[0].type.split("/")[1];
+      if (!["csv"].includes(fileExtension)) {
+        alert("Please input a csv file exported from flylog");
+        e.target.value = "";
+        return;
+      }
+
       setFile(e.target.files[0])
     }
 
